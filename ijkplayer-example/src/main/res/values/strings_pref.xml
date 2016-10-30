@@ -26,8 +26,8 @@
         <item>3</item>
     </string-array>
     <string-array name="pref_entry_summaries_player">
-        <item>Auto Select</item>
         <item>AndroidMediaPlayer</item>
+        <item>Auto Select</item>
         <item>IjkMediaPlayer</item>
         <item>IjkExoMediaPlayer</item>
     </string-array>
@@ -50,12 +50,12 @@
     <string name="pref_key_pixel_format">pref.pixel_format</string>
     <string name="pref_title_pixel_format">Pixel Format</string>
     <string-array name="pref_entries_pixel_format">
+        <item>OpenGL ES2</item>
         <item>Auto Select</item>
         <item>RGB 565</item>
         <item>RGB 888</item>
         <item>RGBX 8888</item>
         <item>YV12</item>
-        <item>OpenGL ES2</item>
     </string-array>
     <string-array name="pref_entry_values_pixel_format">
         <item></item>

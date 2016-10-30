@@ -48,6 +48,7 @@ public class FileExplorerActivity extends AppActivity {
             doOpenDirectory(lastDirectory, false);
         else
             doOpenDirectory("/", false);
+        SampleMediaActivity.intentTo(this);
     }
 
     @Override

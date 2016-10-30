@@ -1,1 +1,1 @@
-include ':ijkplayer-example'
+include ':ijkplayer-example', ':library'

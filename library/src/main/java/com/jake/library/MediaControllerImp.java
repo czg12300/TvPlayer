@@ -1,25 +1,21 @@
-package com.jake.library.widget;
+package com.jake.library;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.res.Resources;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
-import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.MediaController;
 
-import com.jake.library.FileMediaDataSource;
+import com.jake.library.widget.IRenderView;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.Map;
 
 import tv.danmaku.ijk.media.player.IMediaPlayer;

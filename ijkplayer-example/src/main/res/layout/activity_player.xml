@@ -17,8 +17,12 @@
             android:id="@+id/video_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:visibility="gone"
             android:layout_gravity="center"></tv.danmaku.ijk.media.example.widget.media.IjkVideoView>
-
+<com.jake.library.widget.TvView
+    android:id="@+id/tv_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"/>
         <TextView
             android:id="@+id/toast_text_view"
             android:layout_width="wrap_content"

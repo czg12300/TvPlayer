@@ -339,13 +339,13 @@ public class MediaControllerImp implements MediaController.MediaPlayerControl {
                     mVideoHeight = mp.getVideoHeight();
                     mVideoSarNum = mp.getVideoSarNum();
                     mVideoSarDen = mp.getVideoSarDen();
-                    if (mVideoWidth != 0 && mVideoHeight != 0) {
-                        if (mRenderView != null) {
-                            mRenderView.setVideoSize(mVideoWidth, mVideoHeight);
-                            mRenderView.setVideoSampleAspectRatio(mVideoSarNum, mVideoSarDen);
-                        }
-                        // REMOVED: getHolder().setFixedSize(mVideoWidth, mVideoHeight);
-                    }
+//                    if (mVideoWidth != 0 && mVideoHeight != 0) {
+//                        if (mRenderView != null) {
+//                            mRenderView.setVideoSize(mVideoWidth, mVideoHeight);
+//                            mRenderView.setVideoSampleAspectRatio(mVideoSarNum, mVideoSarDen);
+//                        }
+//                        // REMOVED: getHolder().setFixedSize(mVideoWidth, mVideoHeight);
+//                    }
                 }
             };
 
@@ -371,8 +371,8 @@ public class MediaControllerImp implements MediaController.MediaPlayerControl {
                 //Log.i("@@@@", "video size: " + mVideoWidth +"/"+ mVideoHeight);
                 // REMOVED: getHolder().setFixedSize(mVideoWidth, mVideoHeight);
                 if (mRenderView != null) {
-                    mRenderView.setVideoSize(mVideoWidth, mVideoHeight);
-                    mRenderView.setVideoSampleAspectRatio(mVideoSarNum, mVideoSarDen);
+//                    mRenderView.setVideoSize(mVideoWidth, mVideoHeight);
+//                    mRenderView.setVideoSampleAspectRatio(mVideoSarNum, mVideoSarDen);
                     if (!mRenderView.shouldWaitForResize() || mSurfaceWidth == mVideoWidth && mSurfaceHeight == mVideoHeight) {
                         // We didn't actually change the size (it was already at the size
                         // we need), so we won't get a "surface changed" callback, so

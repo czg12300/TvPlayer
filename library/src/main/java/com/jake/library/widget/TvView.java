@@ -20,6 +20,13 @@ import com.jake.library.MediaControllerImp;
 
 public class TvView extends FrameLayout {
     private MediaControllerImp mMediaControllerImp;
+    private static final int[] s_allAspectRatio = {
+            IRenderView.AR_ASPECT_FIT_PARENT,
+            IRenderView.AR_ASPECT_FILL_PARENT,
+            IRenderView.AR_ASPECT_WRAP_CONTENT,
+            // IRenderView.AR_MATCH_PARENT,
+            IRenderView.AR_16_9_FIT_PARENT,
+            IRenderView.AR_4_3_FIT_PARENT};
 
     public TvView(Context context) {
         this(context, null);
@@ -33,6 +40,7 @@ public class TvView extends FrameLayout {
         super(context, attrs, defStyleAttr);
         IMediaPlayerBuilder playerBuilder = getIMediaPlayerBuilder(context);
         IRenderView renderView = new SurfaceRenderView(context);
+//        renderView.setAspectRatio(IRenderView.AR_16_9_FIT_PARENT);
         mMediaControllerImp = new MediaControllerImp(context, playerBuilder, renderView);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT, Gravity.CENTER);
         addView(mMediaControllerImp.getView(), lp);

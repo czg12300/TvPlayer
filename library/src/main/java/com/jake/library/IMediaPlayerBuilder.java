@@ -1,11 +1,8 @@
 package com.jake.library;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
-
-import java.util.ArrayList;
 
 import tv.danmaku.ijk.media.exo.IjkExoMediaPlayer;
 import tv.danmaku.ijk.media.player.AndroidMediaPlayer;
@@ -14,57 +11,60 @@ import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 import tv.danmaku.ijk.media.player.TextureMediaPlayer;
 
 /**
- * description：
- *
- * @author Administrator
- * @since 2016/10/30 11:56
+ * Created by jakechen on 2016/11/1.
  */
 
+public final class IMediaPlayerBuilder {
+    public static final int TYPE_IJK = 1;
+    public static final int TYPE_IJK_EXO = 2;
+    public static final int TYPE_ANDROID = 3;
 
-public class MediaPlayerHelper {
-    public static final int PV_PLAYER__Auto = 0;
-    public static final int PV_PLAYER__AndroidMediaPlayer = 1;
-    public static final int PV_PLAYER__IjkMediaPlayer = 2;
-    public static final int PV_PLAYER__IjkExoMediaPlayer = 3;
+    private int mType;
+    private boolean isTextureMediaPlayer;
+    private Context mAppContext;
+    private IjkMediaPlayerBuilder mIjkMediaPlayerBuilder;
 
-    public static IMediaPlayer getAndroidMediaPlayer(boolean isTextureMediaPlayer) {
-        IMediaPlayer mediaPlayer = new AndroidMediaPlayer();
+    private IMediaPlayerBuilder(Context context, int type) {
+        mType = type;
+        mAppContext = context.getApplicationContext();
+    }
+
+    public static IMediaPlayerBuilder create(@NonNull Context context, int type) {
+        return new IMediaPlayerBuilder(context, type);
+    }
+
+    public IMediaPlayerBuilder setTextureMediaPlayer(boolean textureMediaPlayer) {
+        isTextureMediaPlayer = textureMediaPlayer;
+        return this;
+    }
+
+    public IMediaPlayerBuilder setIjkMediaPlayerBuilder(IjkMediaPlayerBuilder builder) {
+        mIjkMediaPlayerBuilder = builder;
+        return this;
+    }
+
+    public IMediaPlayer build() {
+        IMediaPlayer mediaPlayer = null;
+        switch (mType) {
+            case TYPE_ANDROID:
+                mediaPlayer = new AndroidMediaPlayer();
+                break;
+            case TYPE_IJK_EXO:
+            default:
+                mediaPlayer = new IjkExoMediaPlayer(mAppContext);
+                break;
+            case TYPE_IJK:
+                if (mIjkMediaPlayerBuilder == null) {
+                    mIjkMediaPlayerBuilder = IjkMediaPlayerBuilder.create();
+                }
+                mediaPlayer = mIjkMediaPlayerBuilder.build();
+                break;
+        }
         if (isTextureMediaPlayer) {
             mediaPlayer = new TextureMediaPlayer(mediaPlayer);
         }
         return mediaPlayer;
-    }
 
-    public static IMediaPlayer getAndroidMediaPlayer() {
-        return getAndroidMediaPlayer(false);
-    }
-
-    public static IMediaPlayer getIjkExoMediaPlayer(@NonNull Context applicationContext, boolean isTextureMediaPlayer) {
-        IMediaPlayer mediaPlayer = new IjkExoMediaPlayer(applicationContext);
-        if (isTextureMediaPlayer) {
-            mediaPlayer = new TextureMediaPlayer(mediaPlayer);
-        }
-        return mediaPlayer;
-    }
-
-    public static IMediaPlayer getIjkExoMediaPlayer(@NonNull Context applicationContext) {
-        return getIjkExoMediaPlayer(applicationContext, false);
-    }
-
-    public static IMediaPlayer getIjkMediaPlayer(IjkMediaPlayerBuilder builder, boolean isTextureMediaPlayer) {
-        IMediaPlayer mediaPlayer = builder.build();
-        if (isTextureMediaPlayer) {
-            mediaPlayer = new TextureMediaPlayer(mediaPlayer);
-        }
-        return mediaPlayer;
-    }
-
-    public static IMediaPlayer getIjkMediaPlayer(IjkMediaPlayerBuilder builder) {
-        return getIjkMediaPlayer(builder, false);
-    }
-
-    public static IjkMediaPlayerBuilder getDefaultIjkMediaPlayerBuilder() {
-        return IjkMediaPlayerBuilder.create();
     }
 
     public static class IjkMediaPlayerBuilder {
@@ -131,5 +131,3 @@ public class MediaPlayerHelper {
         }
     }
 }
-
-

@@ -13,6 +13,8 @@ import android.view.View;
 import android.widget.MediaController;
 
 import com.jake.library.widget.IRenderView;
+import com.jake.library.widget.SurfaceRenderView;
+import com.jake.library.widget.TextureRenderView;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +49,7 @@ public class MediaControllerImp implements MediaController.MediaPlayerControl {
     // of STATE_PAUSED.
     private int mCurrentState = STATE_IDLE;
     private int mTargetState = STATE_IDLE;
+    private IMediaPlayer mOriginalMediaPlayer;
     private IMediaPlayer mMediaPlayer;
     private IRenderView mRenderView;
     private Uri mUri;
@@ -74,11 +77,15 @@ public class MediaControllerImp implements MediaController.MediaPlayerControl {
     private long mSeekStartTime = 0;
     private long mSeekEndTime = 0;
     private Context mAppContext;
+    private IMediaPlayerBuilder mIMediaPlayerBuilder;
 
-    public MediaControllerImp(@NonNull Context context, @NonNull IMediaPlayer mediaPlayer, @NonNull IRenderView renderView) {
+    public MediaControllerImp(@NonNull Context context, @NonNull IMediaPlayerBuilder builder, @NonNull IRenderView renderView) {
         mAppContext = context.getApplicationContext();
-        mMediaPlayer = mediaPlayer;
+        if (renderView instanceof TextureRenderView) {
+            builder.setTextureMediaPlayer(true);
+        }
         mRenderView = renderView;
+        mIMediaPlayerBuilder = builder;
         mRenderView.addRenderCallback(mSHCallback);
     }
 
@@ -103,6 +110,7 @@ public class MediaControllerImp implements MediaController.MediaPlayerControl {
         am.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
         try {
+            mMediaPlayer = mIMediaPlayerBuilder.build();
             mMediaPlayer.setOnPreparedListener(mPreparedListener);
             mMediaPlayer.setOnVideoSizeChangedListener(mSizeChangedListener);
             mMediaPlayer.setOnCompletionListener(mCompletionListener);
@@ -156,6 +164,7 @@ public class MediaControllerImp implements MediaController.MediaPlayerControl {
 
             mSurfaceWidth = w;
             mSurfaceHeight = h;
+            mRenderView.setVideoSize(w, h);
             boolean isValidState = (mTargetState == STATE_PLAYING);
             boolean hasValidSize = !mRenderView.shouldWaitForResize() || (mVideoWidth == w && mVideoHeight == h);
             if (mMediaPlayer != null && isValidState && hasValidSize) {
@@ -174,10 +183,7 @@ public class MediaControllerImp implements MediaController.MediaPlayerControl {
             }
 
             mSurfaceHolder = holder;
-            if (mMediaPlayer != null)
-                bindSurfaceHolder(mMediaPlayer, holder);
-            else
-                openVideo();
+            openVideo();
         }
 
         @Override
@@ -223,6 +229,9 @@ public class MediaControllerImp implements MediaController.MediaPlayerControl {
 
     public void setURI(Uri uri, Map<String, String> headers) {
         mUri = uri;
+        mHeaders = headers;
+        mSeekWhenPrepared = 0;
+        openVideo();
     }
 
 

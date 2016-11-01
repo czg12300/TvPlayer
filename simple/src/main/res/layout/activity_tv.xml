@@ -3,8 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.jake.library.widget.SurfaceRenderView
-        android:id="@+id/surface_view"
+    <com.jake.library.widget.TvView
+        android:id="@+id/tv_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 </FrameLayout>

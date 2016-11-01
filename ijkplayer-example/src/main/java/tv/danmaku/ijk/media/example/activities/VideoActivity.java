@@ -64,7 +64,6 @@ public class VideoActivity extends AppCompatActivity implements TracksFragment.I
 
     private Settings mSettings;
     private boolean mBackPressed;
-    private TvView tvView;
 
     public static Intent newIntent(Context context, String videoPath, String videoTitle) {
         Intent intent = new Intent(context, VideoActivity.class);
@@ -81,7 +80,6 @@ public class VideoActivity extends AppCompatActivity implements TracksFragment.I
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
-        tvView = (TvView) findViewById(R.id.tv_view);
         mSettings = new Settings(this);
 
         // handle arguments
@@ -143,18 +141,16 @@ public class VideoActivity extends AppCompatActivity implements TracksFragment.I
         mVideoView.setMediaController(mMediaController);
         mVideoView.setHudView(mHudView);
         // prefer mVideoPath
-//        if (mVideoPath != null)
-//            mVideoView.setVideoPath(mVideoPath);
-//        else if (mVideoUri != null)
-//            mVideoView.setVideoURI(mVideoUri);
-//        else {
-//            Log.e(TAG, "Null Data Source\n");
-//            finish();
-//            return;
-//        }
-//        mVideoView.start();
-        tvView.setUri(mVideoUri);
-        tvView.start();
+        if (mVideoPath != null)
+            mVideoView.setVideoPath(mVideoPath);
+        else if (mVideoUri != null)
+            mVideoView.setVideoURI(mVideoUri);
+        else {
+            Log.e(TAG, "Null Data Source\n");
+            finish();
+            return;
+        }
+        mVideoView.start();
     }
 
     @Override

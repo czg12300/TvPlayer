@@ -20,7 +20,7 @@ public final class IMediaPlayerBuilder {
     public static final int TYPE_ANDROID = 3;
 
     private int mType;
-    private boolean isTextureMediaPlayer;
+    private boolean isTextureMediaPlayer = false;
     private Context mAppContext;
     private IjkMediaPlayerBuilder mIjkMediaPlayerBuilder;
 

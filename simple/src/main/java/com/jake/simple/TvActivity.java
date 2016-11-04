@@ -8,10 +8,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
-import com.jake.library.widget.SurfaceRenderView;
+import com.jake.library.SurfaceVideoView;
 import com.jake.library.widget.TvView;
-
-import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 
 /**
  * @author Administrator
@@ -21,19 +19,19 @@ import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 
 public class TvActivity extends Activity {
     private String mUrl;
-    private TvView mSurfaceRenderView;
+    private SurfaceVideoView mSurfaceRenderView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tv);
-        mSurfaceRenderView = (TvView) findViewById(R.id.tv_view);
+        mSurfaceRenderView = (SurfaceVideoView) findViewById(R.id.video_view);
         mUrl = getIntent().getStringExtra("url");
         if (TextUtils.isEmpty(mUrl)) {
             finish();
             return;
         }
-        mSurfaceRenderView.setUri(Uri.parse(mUrl.trim()));
+        mSurfaceRenderView.setURI(Uri.parse(mUrl.trim()));
         mSurfaceRenderView.start();
     }
 
@@ -48,13 +46,13 @@ public class TvActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-//        mSurfaceRenderView.getMediaController().release(true);
+        mSurfaceRenderView.pause();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mSurfaceRenderView.getMediaController().release(true);
+        mSurfaceRenderView.release(true);
     }
 
     public static void start(@NonNull Context context, @NonNull String url) {

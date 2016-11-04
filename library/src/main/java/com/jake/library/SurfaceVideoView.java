@@ -1,6 +1,7 @@
 package com.jake.library;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -9,8 +10,11 @@ import android.os.Build;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.WindowManager;
 import android.widget.MediaController;
 
 import com.jake.library.widget.MeasureHelper;
@@ -55,6 +59,7 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
     private int mVideoSarDen;
     private int mCurrentState = STATE_IDLE;
     private int mTargetState = STATE_IDLE;
+    private AudioManager mAudioManager;
 
     public SurfaceVideoView(Context context) {
         this(context, null);
@@ -69,6 +74,8 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
         mAppContext = context.getApplicationContext();
         mMeasureHelper = new MeasureHelper(this);
         getHolder().addCallback(this);
+        mAudioManager = (AudioManager) mAppContext.getSystemService(Context.AUDIO_SERVICE);
+        mGestureDetector = new GestureDetector(mAppContext, new MyGestureListener());
     }
 
     private IMediaPlayerBuilder mMediaPlayerBuilder;
@@ -167,8 +174,7 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
         // we shouldn't clear the target state, because somebody might have
         // called start() previously
         release(false);
-        AudioManager am = (AudioManager) mAppContext.getSystemService(Context.AUDIO_SERVICE);
-        am.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        mAudioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
         try {
             mMediaPlayer = mMediaPlayerBuilder.build();
@@ -223,8 +229,7 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
             if (clearTargetState) {
                 mTargetState = STATE_IDLE;
             }
-            AudioManager am = (AudioManager) mAppContext.getSystemService(Context.AUDIO_SERVICE);
-            am.abandonAudioFocus(null);
+            mAudioManager.abandonAudioFocus(null);
         }
     }
 
@@ -388,8 +393,7 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
             mMediaPlayer = null;
             mCurrentState = STATE_IDLE;
             mTargetState = STATE_IDLE;
-            AudioManager am = (AudioManager) mAppContext.getSystemService(Context.AUDIO_SERVICE);
-            am.abandonAudioFocus(null);
+            mAudioManager.abandonAudioFocus(null);
         }
         release(true);
     }
@@ -453,4 +457,136 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
     public int getAudioSessionId() {
         return 0;
     }
+
+
+    private GestureDetector mGestureDetector;
+
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (mGestureDetector.onTouchEvent(event))
+            return true;
+
+        // 处理手势结束
+        switch (event.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_UP:
+                endGesture();
+                break;
+        }
+
+        return super.onTouchEvent(event);
+    }
+
+    /** 手势结束 */
+    private void endGesture() {
+        mVolume = -1;
+        mBrightness = -1f;
+
+        // 隐藏
+//        mDismissHandler.removeMessages(0);
+//        mDismissHandler.sendEmptyMessageDelayed(0, 500);
+    }
+
+
+
+
+    /** 最大声音 */
+    private int mMaxVolume;
+    /** 当前声音 */
+    private int mVolume = -1;
+    /** 当前亮度 */
+    private float mBrightness = -1f;
+
+
+
+    private class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
+
+        /** 双击 */
+        @Override
+        public boolean onDoubleTap(MotionEvent e) {
+            return true;
+        }
+
+        /** 滑动 */
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2,
+                                float distanceX, float distanceY) {
+            float mOldX = e1.getX(), mOldY = e1.getY();
+            int y = (int) e2.getRawY();
+
+            int windowWidth =  getResources().getDisplayMetrics().widthPixels;
+            int windowHeight = getResources().getDisplayMetrics().heightPixels;
+
+            if (mOldX > windowWidth * 4.0 / 5)// 右边滑动
+                onVolumeSlide((mOldY - y) / windowHeight);
+            else if (mOldX < windowWidth / 5.0)// 左边滑动
+                onBrightnessSlide((mOldY - y) / windowHeight);
+
+            return  super.onScroll(e1, e2, distanceX, distanceY);
+        }
+    }
+
+    /**
+     * 滑动改变声音大小
+     *
+     * @param percent
+     */
+    private void onVolumeSlide(float percent) {
+        if (mVolume == -1) {
+            mVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            if (mVolume < 0)
+                mVolume = 0;
+
+            // 显示
+//            mOperationBg.setImageResource(R.drawable.video_volumn_bg);
+//            mVolumeBrightnessLayout.setVisibility(View.VISIBLE);
+        }
+
+        int index = (int) (percent * mMaxVolume) + mVolume;
+        if (index > mMaxVolume)
+            index = mMaxVolume;
+        else if (index < 0)
+            index = 0;
+
+        // 变更声音
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, index, 0);
+
+        // 变更进度条
+//        ViewGroup.LayoutParams lp = mOperationPercent.getLayoutParams();
+//        lp.width = findViewById(R.id.operation_full).getLayoutParams().width
+//                * index / mMaxVolume;
+//        mOperationPercent.setLayoutParams(lp);
+    }
+
+    /**
+     * 滑动改变亮度
+     *
+     * @param percent
+     */
+    private void onBrightnessSlide(float percent) {
+        Activity activity= (Activity) getContext();
+        if (mBrightness < 0) {
+            mBrightness = activity.getWindow().getAttributes().screenBrightness;
+            if (mBrightness <= 0.00f)
+                mBrightness = 0.50f;
+            if (mBrightness < 0.01f)
+                mBrightness = 0.01f;
+
+            // 显示
+//            mOperationBg.setImageResource(R.drawable.video_brightness_bg);
+//            mVolumeBrightnessLayout.setVisibility(View.VISIBLE);
+        }
+        WindowManager.LayoutParams lpa =activity. getWindow().getAttributes();
+        lpa.screenBrightness = mBrightness + percent;
+        if (lpa.screenBrightness > 1.0f)
+            lpa.screenBrightness = 1.0f;
+        else if (lpa.screenBrightness < 0.01f)
+            lpa.screenBrightness = 0.01f;
+        activity.getWindow().setAttributes(lpa);
+
+//        ViewGroup.LayoutParams lp = mOperationPercent.getLayoutParams();
+//        lp.width = (int) (findViewById(R.id.operation_full).getLayoutParams().width * lpa.screenBrightness);
+//        mOperationPercent.setLayoutParams(lp);
+    }
+
 }

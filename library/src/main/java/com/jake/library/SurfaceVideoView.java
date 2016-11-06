@@ -460,24 +460,60 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
 
 
     private GestureDetector mGestureDetector;
+    private float distanceX;
+    private float distanceY;
 
+    private void resetLastTouch() {
+        distanceY = 0;
+        distanceX = 0;
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (mGestureDetector.onTouchEvent(event))
-            return true;
-
-        // 处理手势结束
-        switch (event.getAction() & MotionEvent.ACTION_MASK) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                resetLastTouch();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                handleTouchMove(event);
+                break;
+            case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
-                endGesture();
+                resetLastTouch();
                 break;
         }
+//        if (mGestureDetector.onTouchEvent(event))
+//            return true;
+//
+//        // 处理手势结束
+//        switch (event.getAction() & MotionEvent.ACTION_MASK) {
+//            case MotionEvent.ACTION_UP:
+//                endGesture();
+//                break;
+//        }
 
         return super.onTouchEvent(event);
     }
 
-    /** 手势结束 */
+    private void handleTouchMove(MotionEvent e) {
+        distanceX += e.getX();
+        distanceY += e.getY();
+        float mOldX = e.getX(), mOldY = e.getY();
+        int y = (int) e.getRawY();
+
+        int windowWidth = getResources().getDisplayMetrics().widthPixels;
+        int windowHeight = getResources().getDisplayMetrics().heightPixels;
+
+        if (mOldX > windowWidth * 4.0 / 5) {// 右边滑动
+            onVolumeSlide((mOldY - y) / windowHeight);
+        } else if (mOldX < windowWidth / 5.0) {// 左边滑动
+            onBrightnessSlide((mOldY - y) / windowHeight);
+        }
+    }
+
+    /**
+     * 手势结束
+     */
     private void endGesture() {
         mVolume = -1;
         mBrightness = -1f;
@@ -488,33 +524,40 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
     }
 
 
-
-
-    /** 最大声音 */
+    /**
+     * 最大声音
+     */
     private int mMaxVolume;
-    /** 当前声音 */
+    /**
+     * 当前声音
+     */
     private int mVolume = -1;
-    /** 当前亮度 */
+    /**
+     * 当前亮度
+     */
     private float mBrightness = -1f;
-
 
 
     private class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
 
-        /** 双击 */
+        /**
+         * 双击
+         */
         @Override
         public boolean onDoubleTap(MotionEvent e) {
             return true;
         }
 
-        /** 滑动 */
+        /**
+         * 滑动
+         */
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2,
                                 float distanceX, float distanceY) {
             float mOldX = e1.getX(), mOldY = e1.getY();
             int y = (int) e2.getRawY();
 
-            int windowWidth =  getResources().getDisplayMetrics().widthPixels;
+            int windowWidth = getResources().getDisplayMetrics().widthPixels;
             int windowHeight = getResources().getDisplayMetrics().heightPixels;
 
             if (mOldX > windowWidth * 4.0 / 5)// 右边滑动
@@ -522,7 +565,7 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
             else if (mOldX < windowWidth / 5.0)// 左边滑动
                 onBrightnessSlide((mOldY - y) / windowHeight);
 
-            return  super.onScroll(e1, e2, distanceX, distanceY);
+            return super.onScroll(e1, e2, distanceX, distanceY);
         }
     }
 
@@ -564,7 +607,7 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
      * @param percent
      */
     private void onBrightnessSlide(float percent) {
-        Activity activity= (Activity) getContext();
+        Activity activity = (Activity) getContext();
         if (mBrightness < 0) {
             mBrightness = activity.getWindow().getAttributes().screenBrightness;
             if (mBrightness <= 0.00f)
@@ -576,7 +619,7 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
 //            mOperationBg.setImageResource(R.drawable.video_brightness_bg);
 //            mVolumeBrightnessLayout.setVisibility(View.VISIBLE);
         }
-        WindowManager.LayoutParams lpa =activity. getWindow().getAttributes();
+        WindowManager.LayoutParams lpa = activity.getWindow().getAttributes();
         lpa.screenBrightness = mBrightness + percent;
         if (lpa.screenBrightness > 1.0f)
             lpa.screenBrightness = 1.0f;

@@ -42,9 +42,7 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
     private SurfaceHolder mSurfaceHolder;
     private SurfaceTexture mSurfaceTexture;
     private RenderType mRenderType;
-    private int mMaxVolume;
-    private int mVolume;
-    private float mBrightness;
+
 
     public IjkVideoView(Context context) {
         super(context);
@@ -70,8 +68,6 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         requestFocus();
         setClickable(true);
         setRenderType(RenderType.SURFACE_VIEW);
-        mMaxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        mVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         if (context instanceof Activity) {
             mBrightness = ((Activity) context).getWindow().getAttributes().screenBrightness;
         }
@@ -309,30 +305,43 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (mGestureDetector.onTouchEvent(event))
-            return true;
-
+        mGestureDetector.onTouchEvent(event);
         // 处理手势结束
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_UP:
-                endGesture();
+                restVolumeAndBrightness();
                 break;
         }
-
         return super.onTouchEvent(event);
     }
 
+    private int mMaxVolume;
+    private int mVolume = -1;
+    private float mBrightness = -1f;
+    private int mOldCurrentPosition = -1;
+    private int mCurrentPosition = 0;
 
     /**
      * 手势结束
      */
-    private void endGesture() {
+    private void restVolumeAndBrightness() {
+        if (mVolume != -1) {
+            dismissVolumeView();
+        }
+        if (mBrightness != -1) {
+            dismissBrightnessView();
+        }
+
+        seekTo(mCurrentPosition);
+        if (mOldCurrentPosition != -1) {
+            dismissSeekView();
+        }
         mVolume = -1;
         mBrightness = -1f;
-        // 隐藏
-//        mDismissHandler.removeMessages(0);
-//        mDismissHandler.sendEmptyMessageDelayed(0, 500);
+        mOldCurrentPosition = -1;
+        mCurrentPosition = 0;
     }
+
 
     private static class VolumeAndBrightnessGestureListener extends GestureDetector.SimpleOnGestureListener {
         private WeakReference<IjkVideoView> mIjkVideoView;
@@ -348,19 +357,40 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         @Override
         public boolean onScroll(MotionEvent oldEv, MotionEvent posEv,
                                 float distanceX, float distanceY) {
-            if (distanceY > distanceX) {
-                float mOldX = oldEv.getX(), mOldY = oldEv.getY();
-                int y = (int) posEv.getRawY();
-                int windowWidth = getIjkVideoView().getResources().getDisplayMetrics().widthPixels;
+            float countX = Math.abs(oldEv.getX() - posEv.getX());
+            float countY = Math.abs(oldEv.getY() - posEv.getY());
+            int windowWidth = getIjkVideoView().getResources().getDisplayMetrics().widthPixels;
+            if (countY > countX) {
                 int windowHeight = getIjkVideoView().getResources().getDisplayMetrics().heightPixels;
-
-                if (mOldX > windowWidth / 2)// 右边滑动
-                    getIjkVideoView().onVolumeSlide((mOldY - y) / windowHeight);
-                else if (mOldX < windowWidth / 2)// 左边滑动
-                    getIjkVideoView().onBrightnessSlide((mOldY - y) / windowHeight);
+                float mOldX = oldEv.getX();
+                float present = (oldEv.getY() - posEv.getY()) / windowHeight;
+                if (mOldX > windowWidth / 2) {// 右边滑动
+                    getIjkVideoView().onVolumeSlide(present);
+                } else if (mOldX < windowWidth / 2)// 左边滑动
+                    getIjkVideoView().onBrightnessSlide(present);
+            } else {
+                float present = (posEv.getX() - oldEv.getX()) / windowWidth;
+                getIjkVideoView().onSeekSlide(present);
             }
             return super.onScroll(oldEv, posEv, distanceX, distanceY);
         }
+    }
+
+
+    private void onSeekSlide(float percent) {
+        if (mOldCurrentPosition == -1) {
+            mOldCurrentPosition = getCurrentPosition();
+            mCurrentPosition = getCurrentPosition();
+            showSeekView(mCurrentPosition);
+        }
+        int duration = getDuration();
+        mCurrentPosition = mOldCurrentPosition + (int) (duration * percent);
+        if (mCurrentPosition < 0) {
+            mCurrentPosition = 0;
+        } else if (mCurrentPosition > duration) {
+            mCurrentPosition = duration;
+        }
+        showSeekView(mCurrentPosition);
     }
 
     /**
@@ -369,15 +399,22 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
      * @param percent
      */
     private void onVolumeSlide(float percent) {
-        Log.d(TAG, "onVolumeSlide percent=" + percent);
+        if (mVolume == -1) {
+            mMaxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+            mVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            if (mVolume < 0) {
+                mVolume = 0;
+            }
+            showVolumeView(mVolume, mMaxVolume);
+        }
         int index = (int) (percent * mMaxVolume) + mVolume;
         if (index > mMaxVolume) {
             index = mMaxVolume;
-        } else if (index < 0) {
+        } else if (mVolume < 0) {
             index = 0;
         }
-        // 变更声音
-        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, index, 0);
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, index, AudioManager.FLAG_SHOW_UI);
+        changeVolumeProgress(mVolume, mMaxVolume);
     }
 
     /**
@@ -386,31 +423,92 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
      * @param percent
      */
     private void onBrightnessSlide(float percent) {
-        Log.d(TAG, "onBrightnessSlide percent=" + percent);
         if (getContext() != null && getContext() instanceof Activity) {
             Activity activity = (Activity) getContext();
-            if (mBrightness < 0) {
+            if (mBrightness == -1) {
                 mBrightness = activity.getWindow().getAttributes().screenBrightness;
-                if (mBrightness <= 0.00f)
-                    mBrightness = 0.50f;
-                if (mBrightness < 0.01f)
-                    mBrightness = 0.01f;
-                // 显示
-//            mOperationBg.setImageResource(R.drawable.video_brightness_bg);
-//            mVolumeBrightnessLayout.setVisibility(View.VISIBLE);
+                if (mBrightness < 0.01f) {
+                    if (mBrightness <= 0.00f) {
+                        mBrightness = 0.50f;
+                    } else {
+                        mBrightness = 0.01f;
+                    }
+                }
+                showBrightnessView(mBrightness);
             }
             WindowManager.LayoutParams lpa = activity.getWindow().getAttributes();
             lpa.screenBrightness = mBrightness + percent;
-            if (lpa.screenBrightness > 1.0f)
+            if (lpa.screenBrightness > 1.0f) {
                 lpa.screenBrightness = 1.0f;
-            else if (lpa.screenBrightness < 0.01f)
+            } else if (lpa.screenBrightness < 0.01f) {
                 lpa.screenBrightness = 0.01f;
+            }
             activity.getWindow().setAttributes(lpa);
-
-//        ViewGroup.LayoutParams lp = mOperationPercent.getLayoutParams();
-//        lp.width = (int) (findViewById(R.id.operation_full).getLayoutParams().width * lpa.screenBrightness);
-//        mOperationPercent.setLayoutParams(lp);
+            changeBrightnessProgress(lpa.screenBrightness);
         }
+    }
+
+    /**
+     * 显示音量调节的ui
+     */
+    protected void showVolumeView(int volume, int maxVolume) {
+
+    }
+
+    /**
+     * 改变音量大小
+     */
+    protected void changeVolumeProgress(int volume, int maxVolume) {
+
+    }
+
+    /**
+     * 消失音量调节的ui
+     */
+    protected void dismissVolumeView() {
+
+    }
+
+    /**
+     * 显示亮度调节的ui
+     */
+    protected void showBrightnessView(float progress) {
+
+    }
+
+    /**
+     * 改变亮度大小
+     */
+    protected void changeBrightnessProgress(float progress) {
+
+    }
+
+    /**
+     * 消失亮度调节的ui
+     */
+    protected void dismissBrightnessView() {
+
+    }
+
+    /**
+     * 显示播放进度调节的ui
+     */
+    protected void showSeekView(int currentPosition) {
+
+    }
+
+    /**
+     * 改变播放进度大小
+     */
+    protected void changeSeekProgress(int currentPosition) {
+
+    }
+
+    /**
+     * 消失播放进度调节的ui
+     */
+    protected void dismissSeekView() {
+
     }
 
 

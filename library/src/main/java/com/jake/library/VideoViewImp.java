@@ -93,6 +93,10 @@ public class VideoViewImp implements IVideoView {
         }
     }
 
+    public IMediaPlayer getMediaPlayer() {
+        return mMediaPlayer;
+    }
+
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void bindRenderViewHolder() {
         if (mRenderView instanceof SurfaceRenderView) {

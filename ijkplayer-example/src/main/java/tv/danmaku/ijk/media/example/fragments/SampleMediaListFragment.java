@@ -66,6 +66,7 @@ public class SampleMediaListFragment extends Fragment {
                 VideoActivity.intentTo(activity, url, name);
             }
         });
+        mAdapter.addItem("测试", " http://sydata.kugou.com/pgame3/video/6cd409e6f1cd8bcd3f27c0335c8e2310.mp4");
         mAdapter.addItem("CCTV1综合", " http://58.135.196.138:8090/live/db3bd108e3364bf3888ccaf8377af077/index.m3u8");
         mAdapter.addItem("CCTV2财经", "http://58.135.196.138:8090/live/e31fa63612644555a545781ea32e66d4/index.m3u8");
         mAdapter.addItem("CCTV3综艺 ", "http://58.135.196.138:8090/live/A68CE6833D654a9e932A657689463088/index.m3u8");

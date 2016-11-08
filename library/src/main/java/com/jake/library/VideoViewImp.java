@@ -1,36 +1,30 @@
 package com.jake.library;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
+import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
-import android.util.AttributeSet;
 import android.util.Log;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
-import android.view.WindowManager;
-import android.widget.MediaController;
-
-import com.jake.library.widget.MeasureHelper;
+import android.view.Surface;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
 import tv.danmaku.ijk.media.player.IMediaPlayer;
+import tv.danmaku.ijk.media.player.ISurfaceTextureHolder;
 import tv.danmaku.ijk.media.player.misc.IMediaDataSource;
 
 /**
  * Created by jakechen on 2016/11/4.
  */
 
-public class SurfaceVideoView extends SurfaceView implements MediaController.MediaPlayerControl, SurfaceHolder.Callback {
+public class VideoViewImp implements IVideoView {
     private static final int STATE_ERROR = -1;
     private static final int STATE_IDLE = 0;
     private static final int STATE_PREPARING = 1;
@@ -38,12 +32,11 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
     private static final int STATE_PLAYING = 3;
     private static final int STATE_PAUSED = 4;
     private static final int STATE_PLAYBACK_COMPLETED = 5;
-    private static final String TAG = SurfaceVideoView.class.getSimpleName();
+    private static final String TAG = VideoViewImp.class.getSimpleName();
     private IMediaPlayer mMediaPlayer;
     private Context mAppContext;
-    private MeasureHelper mMeasureHelper;
     private Uri mUri;
-    private SurfaceHolder mSurfaceHolder;
+    private IRenderView.IRenderViewHolder mSurfaceHolder;
     private Map<String, String> mHeaders;
     private int mVideoWidth;
     private int mVideoHeight;
@@ -60,41 +53,27 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
     private int mCurrentState = STATE_IDLE;
     private int mTargetState = STATE_IDLE;
     private AudioManager mAudioManager;
+    private MediaPlayerBuilder mMediaPlayerBuilder;
+    private IRenderView mRenderView;
 
-    public SurfaceVideoView(Context context) {
-        this(context, null);
-    }
-
-    public SurfaceVideoView(Context context, AttributeSet attrs) {
-        this(context, attrs, -1);
-    }
-
-    public SurfaceVideoView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        mAppContext = context.getApplicationContext();
-        mMeasureHelper = new MeasureHelper(this);
-        getHolder().addCallback(this);
+    public VideoViewImp(@NonNull IRenderView renderView) {
+        mRenderView = renderView;
+        mAppContext = mRenderView.getApplicationContext();
         mAudioManager = (AudioManager) mAppContext.getSystemService(Context.AUDIO_SERVICE);
-        mGestureDetector = new GestureDetector(mAppContext, new MyGestureListener());
     }
 
-    private IMediaPlayerBuilder mMediaPlayerBuilder;
-
-    public void setMediaPlayerBuilder(IMediaPlayerBuilder builder) {
+    @Override
+    public void setMediaPlayerBuilder(@NonNull MediaPlayerBuilder builder) {
         this.mMediaPlayerBuilder = builder;
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        mMeasureHelper.doMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
-
     public void setURI(Uri uri) {
         setURI(uri, null);
     }
 
-    public void setURI(Uri uri, Map<String, String> headers) {
+    @Override
+    public void setURI(@NonNull Uri uri, Map<String, String> headers) {
         mUri = uri;
         mHeaders = headers;
         mSeekWhenPrepared = 0;
@@ -104,21 +83,40 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
     }
 
 
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        Log.d(TAG, "surfaceCreated");
+    public void surfaceCreated(IRenderView.IRenderViewHolder holder) {
         mSurfaceHolder = holder;
         if (mMediaPlayer != null) {
-            mMediaPlayer.setDisplay(mSurfaceHolder);
+            bindRenderViewHolder();
             start();
         } else {
             openVideo();
         }
     }
 
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.d(TAG, "surfaceChanged");
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    private void bindRenderViewHolder() {
+        if (mRenderView instanceof SurfaceRenderView) {
+            mMediaPlayer.setDisplay(mSurfaceHolder.getSurfaceHolder());
+        } else {
+            if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) && (mMediaPlayer instanceof ISurfaceTextureHolder)) {
+                ISurfaceTextureHolder textureHolder = (ISurfaceTextureHolder) mMediaPlayer;
+                mSurfaceHolder.setOwnSurfaceTexture(false);
+                SurfaceTexture surfaceTexture = textureHolder.getSurfaceTexture();
+                if (surfaceTexture != null) {
+                    mSurfaceHolder.getTextureView().setSurfaceTexture(surfaceTexture);
+                } else {
+                    textureHolder.setSurfaceTexture(mSurfaceHolder.getSurfaceTexture());
+                    textureHolder.setSurfaceTextureHost(mSurfaceHolder.getISurfaceTextureHost());
+                }
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                    mMediaPlayer.setSurface(new Surface(mSurfaceHolder.getSurfaceTexture()));
+                }
+            }
+        }
+    }
+
+    public void surfaceChanged(IRenderView.IRenderViewHolder holder, int format, int width, int height) {
         mSurfaceWidth = width;
         mSurfaceHeight = height;
         setVideoSize(width, height);
@@ -132,9 +130,7 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
         }
     }
 
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        Log.d(TAG, "surfaceDestroyed");
+    public void surfaceDestroyed(IRenderView.IRenderViewHolder holder) {
         mSurfaceHolder = null;
         if (mMediaPlayer != null) {
             mMediaPlayer.setDisplay(null);
@@ -142,30 +138,22 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
     }
 
     private void setVideoSize(int videoWidth, int videoHeight) {
-        if (videoWidth > 0 && videoHeight > 0) {
-            mMeasureHelper.setVideoSize(videoWidth, videoHeight);
-            getHolder().setFixedSize(videoWidth, videoHeight);
-            requestLayout();
-        }
+        mRenderView.setVideoSize(videoWidth, videoHeight);
     }
 
 
-    public void setVideoSampleAspectRatio(int videoSarNum, int videoSarDen) {
-        if (videoSarNum > 0 && videoSarDen > 0) {
-            mMeasureHelper.setVideoSampleAspectRatio(videoSarNum, videoSarDen);
-            requestLayout();
-        }
+    private void setVideoSampleAspectRatio(int videoSarNum, int videoSarDen) {
+        mRenderView.setVideoSampleAspectRatio(videoSarNum, videoSarDen);
     }
 
 
-    @TargetApi(Build.VERSION_CODES.M)
     private void openVideo() {
         if (mMediaPlayerBuilder == null) {
-            IMediaPlayerBuilder.IjkMediaPlayerBuilder builder = IMediaPlayerBuilder.IjkMediaPlayerBuilder.create();
+            MediaPlayerBuilder.IjkMediaPlayerBuilder builder = MediaPlayerBuilder.IjkMediaPlayerBuilder.create();
             builder.setUsingOpenSLES();
             builder.setMediaCodec(true, true);
             builder.setPixelFormat(PixelFormat.OpenGL_ES2);
-            mMediaPlayerBuilder = IMediaPlayerBuilder.create(mAppContext, IMediaPlayerBuilder.TYPE_IJK).setIjkMediaPlayerBuilder(builder);
+            mMediaPlayerBuilder = MediaPlayerBuilder.create(mAppContext, MediaPlayerBuilder.TYPE_IJK).setIjkMediaPlayerBuilder(builder);
         }
         if (mUri == null) {
             // not ready for playback just yet, will try again later
@@ -194,7 +182,7 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
             } else {
                 mMediaPlayer.setDataSource(mUri.toString());
             }
-            mMediaPlayer.setDisplay(mSurfaceHolder);
+            bindRenderViewHolder();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mMediaPlayer.setScreenOnWhilePlaying(true);
             mMediaPlayer.prepareAsync();
@@ -218,7 +206,7 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
         }
     }
 
-
+    @Override
     public void release(boolean clearTargetState) {
         if (mMediaPlayer != null) {
             mMediaPlayer.reset();
@@ -266,7 +254,8 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
                 // REMOVED: getHolder().setFixedSize(mVideoWidth, mVideoHeight);
                 setVideoSize(mVideoWidth, mVideoHeight);
                 setVideoSampleAspectRatio(mVideoSarNum, mVideoSarDen);
-                if (mSurfaceWidth == mVideoWidth && mSurfaceHeight == mVideoHeight) {
+
+                if (mRenderView instanceof TextureRenderView || mSurfaceWidth == mVideoWidth && mSurfaceHeight == mVideoHeight) {
                     // We didn't actually change the size (it was already at the size
                     // we need), so we won't get a "surface changed" callback, so
                     // start the video here instead of in the callback.
@@ -385,7 +374,7 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
         mTargetState = STATE_PAUSED;
     }
 
-
+    @Override
     public void stop() {
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
@@ -456,180 +445,6 @@ public class SurfaceVideoView extends SurfaceView implements MediaController.Med
     @Override
     public int getAudioSessionId() {
         return 0;
-    }
-
-
-    private GestureDetector mGestureDetector;
-    private float distanceX;
-    private float distanceY;
-
-    private void resetLastTouch() {
-        distanceY = 0;
-        distanceX = 0;
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                resetLastTouch();
-                break;
-            case MotionEvent.ACTION_MOVE:
-                handleTouchMove(event);
-                break;
-            case MotionEvent.ACTION_CANCEL:
-            case MotionEvent.ACTION_UP:
-                resetLastTouch();
-                break;
-        }
-//        if (mGestureDetector.onTouchEvent(event))
-//            return true;
-//
-//        // 处理手势结束
-//        switch (event.getAction() & MotionEvent.ACTION_MASK) {
-//            case MotionEvent.ACTION_UP:
-//                endGesture();
-//                break;
-//        }
-
-        return super.onTouchEvent(event);
-    }
-
-    private void handleTouchMove(MotionEvent e) {
-        distanceX += e.getX();
-        distanceY += e.getY();
-        float mOldX = e.getX(), mOldY = e.getY();
-        int y = (int) e.getRawY();
-
-        int windowWidth = getResources().getDisplayMetrics().widthPixels;
-        int windowHeight = getResources().getDisplayMetrics().heightPixels;
-
-        if (mOldX > windowWidth * 4.0 / 5) {// 右边滑动
-            onVolumeSlide((mOldY - y) / windowHeight);
-        } else if (mOldX < windowWidth / 5.0) {// 左边滑动
-            onBrightnessSlide((mOldY - y) / windowHeight);
-        }
-    }
-
-    /**
-     * 手势结束
-     */
-    private void endGesture() {
-        mVolume = -1;
-        mBrightness = -1f;
-
-        // 隐藏
-//        mDismissHandler.removeMessages(0);
-//        mDismissHandler.sendEmptyMessageDelayed(0, 500);
-    }
-
-
-    /**
-     * 最大声音
-     */
-    private int mMaxVolume;
-    /**
-     * 当前声音
-     */
-    private int mVolume = -1;
-    /**
-     * 当前亮度
-     */
-    private float mBrightness = -1f;
-
-
-    private class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
-
-        /**
-         * 双击
-         */
-        @Override
-        public boolean onDoubleTap(MotionEvent e) {
-            return true;
-        }
-
-        /**
-         * 滑动
-         */
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2,
-                                float distanceX, float distanceY) {
-            float mOldX = e1.getX(), mOldY = e1.getY();
-            int y = (int) e2.getRawY();
-
-            int windowWidth = getResources().getDisplayMetrics().widthPixels;
-            int windowHeight = getResources().getDisplayMetrics().heightPixels;
-
-            if (mOldX > windowWidth * 4.0 / 5)// 右边滑动
-                onVolumeSlide((mOldY - y) / windowHeight);
-            else if (mOldX < windowWidth / 5.0)// 左边滑动
-                onBrightnessSlide((mOldY - y) / windowHeight);
-
-            return super.onScroll(e1, e2, distanceX, distanceY);
-        }
-    }
-
-    /**
-     * 滑动改变声音大小
-     *
-     * @param percent
-     */
-    private void onVolumeSlide(float percent) {
-        if (mVolume == -1) {
-            mVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-            if (mVolume < 0)
-                mVolume = 0;
-
-            // 显示
-//            mOperationBg.setImageResource(R.drawable.video_volumn_bg);
-//            mVolumeBrightnessLayout.setVisibility(View.VISIBLE);
-        }
-
-        int index = (int) (percent * mMaxVolume) + mVolume;
-        if (index > mMaxVolume)
-            index = mMaxVolume;
-        else if (index < 0)
-            index = 0;
-
-        // 变更声音
-        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, index, 0);
-
-        // 变更进度条
-//        ViewGroup.LayoutParams lp = mOperationPercent.getLayoutParams();
-//        lp.width = findViewById(R.id.operation_full).getLayoutParams().width
-//                * index / mMaxVolume;
-//        mOperationPercent.setLayoutParams(lp);
-    }
-
-    /**
-     * 滑动改变亮度
-     *
-     * @param percent
-     */
-    private void onBrightnessSlide(float percent) {
-        Activity activity = (Activity) getContext();
-        if (mBrightness < 0) {
-            mBrightness = activity.getWindow().getAttributes().screenBrightness;
-            if (mBrightness <= 0.00f)
-                mBrightness = 0.50f;
-            if (mBrightness < 0.01f)
-                mBrightness = 0.01f;
-
-            // 显示
-//            mOperationBg.setImageResource(R.drawable.video_brightness_bg);
-//            mVolumeBrightnessLayout.setVisibility(View.VISIBLE);
-        }
-        WindowManager.LayoutParams lpa = activity.getWindow().getAttributes();
-        lpa.screenBrightness = mBrightness + percent;
-        if (lpa.screenBrightness > 1.0f)
-            lpa.screenBrightness = 1.0f;
-        else if (lpa.screenBrightness < 0.01f)
-            lpa.screenBrightness = 0.01f;
-        activity.getWindow().setAttributes(lpa);
-
-//        ViewGroup.LayoutParams lp = mOperationPercent.getLayoutParams();
-//        lp.width = (int) (findViewById(R.id.operation_full).getLayoutParams().width * lpa.screenBrightness);
-//        mOperationPercent.setLayoutParams(lp);
     }
 
 }

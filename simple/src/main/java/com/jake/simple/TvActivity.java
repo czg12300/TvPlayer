@@ -8,8 +8,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
-import com.jake.library.SurfaceVideoView;
-import com.jake.library.widget.TvView;
+import com.jake.library.IjkVideoView;
 
 /**
  * @author Administrator
@@ -19,18 +18,19 @@ import com.jake.library.widget.TvView;
 
 public class TvActivity extends Activity {
     private String mUrl;
-    private SurfaceVideoView mSurfaceRenderView;
+    private IjkVideoView mSurfaceRenderView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tv);
-        mSurfaceRenderView = (SurfaceVideoView) findViewById(R.id.video_view);
+        mSurfaceRenderView = (IjkVideoView) findViewById(R.id.video_view);
         mUrl = getIntent().getStringExtra("url");
         if (TextUtils.isEmpty(mUrl)) {
             finish();
             return;
         }
+        mSurfaceRenderView.setRenderType(IjkVideoView.RenderType.TEXTURE_VIEW);
         mSurfaceRenderView.setURI(Uri.parse(mUrl.trim()));
         mSurfaceRenderView.start();
     }

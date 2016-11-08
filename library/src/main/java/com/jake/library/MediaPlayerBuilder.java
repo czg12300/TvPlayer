@@ -14,7 +14,7 @@ import tv.danmaku.ijk.media.player.TextureMediaPlayer;
  * Created by jakechen on 2016/11/1.
  */
 
-public final class IMediaPlayerBuilder {
+public final class MediaPlayerBuilder {
     public static final int TYPE_IJK = 1;
     public static final int TYPE_IJK_EXO = 2;
     public static final int TYPE_ANDROID = 3;
@@ -24,21 +24,21 @@ public final class IMediaPlayerBuilder {
     private Context mAppContext;
     private IjkMediaPlayerBuilder mIjkMediaPlayerBuilder;
 
-    private IMediaPlayerBuilder(Context context, int type) {
+    private MediaPlayerBuilder(Context context, int type) {
         mType = type;
         mAppContext = context.getApplicationContext();
     }
 
-    public static IMediaPlayerBuilder create(@NonNull Context context, int type) {
-        return new IMediaPlayerBuilder(context, type);
+    public static MediaPlayerBuilder create(@NonNull Context context, int type) {
+        return new MediaPlayerBuilder(context, type);
     }
 
-    public IMediaPlayerBuilder setTextureMediaPlayer(boolean textureMediaPlayer) {
+    public MediaPlayerBuilder setTextureMediaPlayer(boolean textureMediaPlayer) {
         isTextureMediaPlayer = textureMediaPlayer;
         return this;
     }
 
-    public IMediaPlayerBuilder setIjkMediaPlayerBuilder(IjkMediaPlayerBuilder builder) {
+    public MediaPlayerBuilder setIjkMediaPlayerBuilder(IjkMediaPlayerBuilder builder) {
         mIjkMediaPlayerBuilder = builder;
         return this;
     }

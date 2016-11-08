@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.jake.library.widget;
+package com.jake.library;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.view.View;
+
 
 import java.lang.ref.WeakReference;
 

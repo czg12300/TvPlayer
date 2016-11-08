@@ -924,7 +924,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
 
         if (mAllRenders.isEmpty())
             mAllRenders.add(RENDER_SURFACE_VIEW);
-        mCurrentRender = mAllRenders.get(mCurrentRenderIndex);
+        mCurrentRender =RENDER_TEXTURE_VIEW;
         setRender(mCurrentRender);
     }
 

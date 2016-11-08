@@ -319,7 +319,7 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
     private int mVolume = -1;
     private float mBrightness = -1f;
     private int mOldCurrentPosition = -1;
-    private int mCurrentPosition = 0;
+    private int mCurrentPosition = -1;
 
     /**
      * 手势结束
@@ -331,15 +331,16 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         if (mBrightness != -1) {
             dismissBrightnessView();
         }
-
-        seekTo(mCurrentPosition);
+        if (mOldCurrentPosition != mCurrentPosition && mCurrentPosition != -1) {
+            seekTo(mCurrentPosition);
+        }
         if (mOldCurrentPosition != -1) {
             dismissSeekView();
         }
         mVolume = -1;
         mBrightness = -1f;
         mOldCurrentPosition = -1;
-        mCurrentPosition = 0;
+        mCurrentPosition = -1;
     }
 
 

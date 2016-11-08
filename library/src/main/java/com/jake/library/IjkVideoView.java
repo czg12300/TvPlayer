@@ -320,6 +320,11 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
     private float mBrightness = -1f;
     private int mOldCurrentPosition = -1;
     private int mCurrentPosition = -1;
+    private int mPositionSlide = SLIDE_DEFAULT;
+    private static final int SLIDE_DEFAULT = 0;
+    private static final int SLIDE_VOLUME = 2;
+    private static final int SLIDE_BRIGHTNESS = 1;
+    private static final int SLIDE_SEEK = 3;
 
     /**
      * 手势结束
@@ -341,8 +346,12 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         mBrightness = -1f;
         mOldCurrentPosition = -1;
         mCurrentPosition = -1;
+        mPositionSlide = SLIDE_DEFAULT;
     }
 
+    private int getPositionSlide() {
+        return mPositionSlide;
+    }
 
     private static class VolumeAndBrightnessGestureListener extends GestureDetector.SimpleOnGestureListener {
         private WeakReference<IjkVideoView> mIjkVideoView;
@@ -358,20 +367,28 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         @Override
         public boolean onScroll(MotionEvent oldEv, MotionEvent posEv,
                                 float distanceX, float distanceY) {
+            Log.d(TAG, " distanceX=" + distanceX + "  distanceY=" + distanceY);
             float countX = Math.abs(oldEv.getX() - posEv.getX());
             float countY = Math.abs(oldEv.getY() - posEv.getY());
             int windowWidth = getIjkVideoView().getResources().getDisplayMetrics().widthPixels;
+            int positionSlide = getIjkVideoView().getPositionSlide();
             if (countY > countX) {
                 int windowHeight = getIjkVideoView().getResources().getDisplayMetrics().heightPixels;
                 float mOldX = oldEv.getX();
                 float present = (oldEv.getY() - posEv.getY()) / windowHeight;
                 if (mOldX > windowWidth / 2) {// 右边滑动
-                    getIjkVideoView().onVolumeSlide(present);
+                    if (positionSlide == SLIDE_DEFAULT || positionSlide == SLIDE_VOLUME) {
+                        getIjkVideoView().onVolumeSlide(present);
+                    }
                 } else if (mOldX < windowWidth / 2)// 左边滑动
-                    getIjkVideoView().onBrightnessSlide(present);
+                    if (positionSlide == SLIDE_DEFAULT || positionSlide == SLIDE_BRIGHTNESS) {
+                        getIjkVideoView().onBrightnessSlide(present);
+                    }
             } else {
                 float present = (posEv.getX() - oldEv.getX()) / windowWidth;
-                getIjkVideoView().onSeekSlide(present);
+                if (positionSlide == SLIDE_DEFAULT || positionSlide == SLIDE_SEEK) {
+                    getIjkVideoView().onSeekSlide(present);
+                }
             }
             return super.onScroll(oldEv, posEv, distanceX, distanceY);
         }
@@ -380,9 +397,13 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
 
     private void onSeekSlide(float percent) {
         if (mOldCurrentPosition == -1) {
+            mPositionSlide = SLIDE_SEEK;
             mOldCurrentPosition = getCurrentPosition();
             mCurrentPosition = getCurrentPosition();
             showSeekView(mCurrentPosition);
+        }
+        if (mPositionSlide != SLIDE_SEEK) {
+            return;
         }
         int duration = getDuration();
         mCurrentPosition = mOldCurrentPosition + (int) (duration * percent);
@@ -401,12 +422,16 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
      */
     private void onVolumeSlide(float percent) {
         if (mVolume == -1) {
+            mPositionSlide = SLIDE_VOLUME;
             mMaxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
             mVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
             if (mVolume < 0) {
                 mVolume = 0;
             }
             showVolumeView(mVolume, mMaxVolume);
+        }
+        if (mPositionSlide != SLIDE_VOLUME) {
+            return;
         }
         int index = (int) (percent * mMaxVolume) + mVolume;
         if (index > mMaxVolume) {
@@ -427,6 +452,7 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         if (getContext() != null && getContext() instanceof Activity) {
             Activity activity = (Activity) getContext();
             if (mBrightness == -1) {
+                mPositionSlide = SLIDE_BRIGHTNESS;
                 mBrightness = activity.getWindow().getAttributes().screenBrightness;
                 if (mBrightness < 0.01f) {
                     if (mBrightness <= 0.00f) {
@@ -436,6 +462,9 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
                     }
                 }
                 showBrightnessView(mBrightness);
+            }
+            if (mPositionSlide != SLIDE_BRIGHTNESS) {
+                return;
             }
             WindowManager.LayoutParams lpa = activity.getWindow().getAttributes();
             lpa.screenBrightness = mBrightness + percent;

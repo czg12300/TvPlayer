@@ -30,8 +30,9 @@ import java.util.List;
 public class TvListActivity extends AppCompatActivity {
     private MyAdapter mAdapter;
 
-    public static void start(@NonNull Context context) {
+    public static void start(@NonNull Context context, int index) {
         Intent it = new Intent(context, TvListActivity.class);
+        it.putExtra("index", index);
         context.startActivity(it);
     }
 
@@ -42,7 +43,12 @@ public class TvListActivity extends AppCompatActivity {
         ListView listView = new ListView(this);
         setContentView(listView);
         mAdapter = new MyAdapter(this);
-        mAdapter.set(getDatas());
+        int index = getIntent().getIntExtra("index", 0);
+        if (index > 0) {
+            mAdapter.set(getTestDatas());
+        } else {
+            mAdapter.set(getDatas());
+        }
         listView.setAdapter(mAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -54,10 +60,50 @@ public class TvListActivity extends AppCompatActivity {
     }
 
 
+    private List<ItemInfo> getTestDatas() {
+        int i = 3;
+        String[] name = new String[]{"CCTV-1", "CCTV-2", "CCTV-3", "CCTV-4", "CCTV-5", "CCTV-6", "CCTV-7", "CCTV-8", "CCTV-9", "CCTV-10", "CCTV-11", "CCTV-12", "CCTV-13", "CCTV-14", "CCTV-15"
+                , "重庆卫视", "东方卫视", "东南卫视", "广东卫视", "广西卫视", "贵州卫视", "湖北卫视", "湖南卫视", "江苏卫视", "辽宁卫视", "旅游卫视", "内蒙古卫视", "山东卫视", "山西卫视", "深圳卫视", "金鹰卡通", "炫动卡通"
+                , "优漫卡通", "中国教育1", "CCTV-NEWS", "安徽卫视", "北京卫视", "甘肃卫视", "河北卫视", "浙江卫视", "黑龙江卫视", "河南卫视", "江西卫视", "宁夏卫视", "陕西卫视", "四川卫视", "BTV-kaku少儿", "天津卫视",
+                "兵团卫视", "暂无", "XX综合", "XX蒙语", "XX影视", "XX旅游", "XX妇女儿童", "新疆卫视", "新疆2", "新疆3", "新疆4", "新疆5", "新疆6", "新疆7", "新疆8", "新疆9", "新疆10", "新疆11", "新疆12", "XE-TV", "乌鲁木齐卫视?"
+                , "dongman"
+        };
+        String urlname = "http://221.181.41.123/live/31";
+        String[] url = new String[]{"http://218.24.47.44/CCTV1.m3u8", "http://218.24.47.44/CCTV2.m3u8", urlname + "0" + (i++),
+                urlname + "0" + (i++), urlname + "0" + (i++), urlname + "0" + (i++), urlname + "0" + (i++),
+                urlname + "0" + (i++), urlname + "0" + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                urlname + (i++), urlname + (i++), urlname + (i++), urlname + (i++),
+                "http://lm02.everyon.tv:80/ptv2/pld687/playlist.m3u8"
+        };
+        List<ItemInfo> infos = new ArrayList<>();
+
+        for (int j = 0; j < name.length; j++) {
+            infos.add(new ItemInfo(name[j], url[j]));
+        }
+        return infos;
+
+
+    }
+
     private List<ItemInfo> getDatas() {
         List<ItemInfo> infos = new ArrayList<>();
-        infos.add(new ItemInfo("CCTV1综合", "http://sydata.kugou.com/pgame3/video/6cd409e6f1cd8bcd3f27c0335c8e2310.mp4"));
-        infos.add(new ItemInfo("CCTV1综合", "http://sydata.kugou.com/pgame3/video/48b4be29862d38f8936951b6fda4dbc8.mp4"));
+        infos.add(new ItemInfo("测试视频", "http://sydata.kugou.com/pgame3/video/6cd409e6f1cd8bcd3f27c0335c8e2310.mp4"));
+        infos.add(new ItemInfo("测试视频", "http://sydata.kugou.com/pgame3/video/48b4be29862d38f8936951b6fda4dbc8.mp4"));
         infos.add(new ItemInfo("CCTV1综合", " http://58.135.196.138:8090/live/db3bd108e3364bf3888ccaf8377af077/index.m3u8"));
         infos.add(new ItemInfo("CCTV2财经", "http://58.135.196.138:8090/live/e31fa63612644555a545781ea32e66d4/index.m3u8"));
         infos.add(new ItemInfo("CCTV3综艺 ", "http://58.135.196.138:8090/live/A68CE6833D654a9e932A657689463088/index.m3u8"));

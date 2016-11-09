@@ -18,14 +18,18 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = new ListView(this);
         setContentView(listView);
         mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-        mAdapter.add("电视");
+        mAdapter.add("电视1");
+        mAdapter.add("电视2");
         listView.setAdapter(mAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (position) {
                     case 0:
-                        TvListActivity.start(MainActivity.this);
+                        TvListActivity.start(MainActivity.this, 0);
+                        break;
+                    case 1:
+                        TvListActivity.start(MainActivity.this, 1);
                         break;
                 }
             }

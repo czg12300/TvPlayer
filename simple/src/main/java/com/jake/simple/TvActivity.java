@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.jake.library.IRenderView;
 import com.jake.library.videoview.CommonVideoView;
@@ -28,6 +29,7 @@ public class TvActivity extends Activity {
         setContentView(R.layout.activity_tv);
         mSurfaceRenderView = (CommonVideoView) findViewById(R.id.video_view);
         mUrl = getIntent().getStringExtra("url");
+        Log.d("TvActivity"," url:  "+mUrl);
         if (TextUtils.isEmpty(mUrl)) {
             finish();
             return;
@@ -37,7 +39,7 @@ public class TvActivity extends Activity {
         } else {
             mSurfaceRenderView.setEnableSlideSeek(true);
         }
-        mSurfaceRenderView.setRenderType(IjkVideoView.RenderType.TEXTURE_VIEW);
+        mSurfaceRenderView.setRenderType(IjkVideoView.RenderType.SURFACE_VIEW);
         mSurfaceRenderView.setURI(Uri.parse(mUrl.trim()));
         mSurfaceRenderView.setAspectRatio(IRenderView.AR_16_9_FIT_PARENT);
         mSurfaceRenderView.start();

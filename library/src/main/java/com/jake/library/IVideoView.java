@@ -20,5 +20,7 @@ public interface IVideoView extends MediaController.MediaPlayerControl {
 
     void release(boolean clearTargetState);
 
+    void setAspectRatio(int aspectRatio);
+
     void stop();
 }

@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
+import com.jake.library.IRenderView;
 import com.jake.library.IjkVideoView;
 
 /**
@@ -30,8 +31,14 @@ public class TvActivity extends Activity {
             finish();
             return;
         }
+        if (mUrl.endsWith(".m3u8")) {
+            mSurfaceRenderView.setEnableSlideSeek(false);
+        } else {
+            mSurfaceRenderView.setEnableSlideSeek(true);
+        }
         mSurfaceRenderView.setRenderType(IjkVideoView.RenderType.TEXTURE_VIEW);
         mSurfaceRenderView.setURI(Uri.parse(mUrl.trim()));
+        mSurfaceRenderView.setAspectRatio(IRenderView.AR_16_9_FIT_PARENT);
         mSurfaceRenderView.start();
     }
 

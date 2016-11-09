@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.TextureView;
@@ -42,7 +43,11 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
     private SurfaceHolder mSurfaceHolder;
     private SurfaceTexture mSurfaceTexture;
     private RenderType mRenderType;
+    private boolean mEnableSlideSeek = true;
 
+    public void setEnableSlideSeek(boolean enableSlideSeek) {
+        this.mEnableSlideSeek = enableSlideSeek;
+    }
 
     public IjkVideoView(Context context) {
         super(context);
@@ -108,7 +113,8 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         if (getChildCount() > 0) {
             removeAllViews();
         }
-        addView(view, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+
+        addView(view, new LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
     }
 
     private SurfaceHolder.Callback mSurfaceHolderCallback = new SurfaceHolder.Callback() {
@@ -243,6 +249,11 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
     }
 
     @Override
+    public void setAspectRatio(int aspectRatio) {
+        mVideoViewImp.setAspectRatio(aspectRatio);
+    }
+
+    @Override
     public void stop() {
         mVideoViewImp.stop();
     }
@@ -336,8 +347,10 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         if (mBrightness != -1) {
             dismissBrightnessView();
         }
+        Log.d(TAG,"getCurrentPosition="+getCurrentPosition()+"   getDuration()="+getDuration() +"  mOldCurrentPosition="+mOldCurrentPosition+"  mCurrentPosition="+mCurrentPosition);
         if (mOldCurrentPosition != mCurrentPosition && mCurrentPosition != -1) {
             seekTo(mCurrentPosition);
+            start();
         }
         if (mOldCurrentPosition != -1) {
             dismissSeekView();
@@ -386,7 +399,7 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
                     }
             } else {
                 float present = (posEv.getX() - oldEv.getX()) / windowWidth;
-                if (positionSlide == SLIDE_DEFAULT || positionSlide == SLIDE_SEEK) {
+                if (getIjkVideoView().isEnableSlideSeek() && (positionSlide == SLIDE_DEFAULT || positionSlide == SLIDE_SEEK)) {
                     getIjkVideoView().onSeekSlide(present);
                 }
             }
@@ -394,6 +407,9 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         }
     }
 
+    private boolean isEnableSlideSeek() {
+        return mEnableSlideSeek;
+    }
 
     private void onSeekSlide(float percent) {
         if (mOldCurrentPosition == -1) {

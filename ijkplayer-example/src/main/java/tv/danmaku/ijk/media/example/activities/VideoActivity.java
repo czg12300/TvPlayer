@@ -42,6 +42,7 @@ import tv.danmaku.ijk.media.example.application.Settings;
 import tv.danmaku.ijk.media.example.content.RecentMediaStorage;
 import tv.danmaku.ijk.media.example.fragments.TracksFragment;
 import tv.danmaku.ijk.media.example.widget.media.AndroidMediaController;
+import tv.danmaku.ijk.media.example.widget.media.IRenderView;
 import tv.danmaku.ijk.media.example.widget.media.IjkVideoView;
 import tv.danmaku.ijk.media.example.widget.media.MeasureHelper;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
@@ -149,7 +150,7 @@ public class VideoActivity extends AppCompatActivity implements TracksFragment.I
             finish();
             return;
         }
-
+        mVideoView.setAspectRatio(IRenderView.AR_16_9_FIT_PARENT);
         mVideoView.start();
     }
 

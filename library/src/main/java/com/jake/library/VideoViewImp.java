@@ -225,6 +225,11 @@ public class VideoViewImp implements IVideoView {
         }
     }
 
+    @Override
+    public void setAspectRatio(int aspectRatio) {
+        mRenderView.setAspectRatio(aspectRatio);
+    }
+
     IMediaPlayer.OnVideoSizeChangedListener mSizeChangedListener =
             new IMediaPlayer.OnVideoSizeChangedListener() {
                 public void onVideoSizeChanged(IMediaPlayer mp, int width, int height, int sarNum, int sarDen) {
@@ -403,6 +408,9 @@ public class VideoViewImp implements IVideoView {
     @Override
     public int getCurrentPosition() {
         if (isInPlaybackState()) {
+            if (mCurrentState == STATE_PLAYBACK_COMPLETED && mTargetState == STATE_PLAYBACK_COMPLETED) {
+                return (int) mMediaPlayer.getDuration();
+            }
             return (int) mMediaPlayer.getCurrentPosition();
         }
         return 0;
@@ -416,6 +424,7 @@ public class VideoViewImp implements IVideoView {
         } else {
             mSeekWhenPrepared = msec;
         }
+        start();
     }
 
     @Override

@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:background="#ffffff">
 
-    <com.jake.library.IjkVideoView
+    <com.jake.library.videoview.CommonVideoView
         android:id="@+id/video_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

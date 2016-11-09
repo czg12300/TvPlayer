@@ -1,4 +1,4 @@
-package com.jake.library;
+package com.jake.library.videoview;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -18,6 +18,13 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+
+import com.jake.library.IRenderView;
+import com.jake.library.IVideoView;
+import com.jake.library.MediaPlayerBuilder;
+import com.jake.library.SurfaceRenderView;
+import com.jake.library.TextureRenderView;
+import com.jake.library.VideoViewImp;
 
 import java.lang.ref.WeakReference;
 import java.util.Map;
@@ -347,7 +354,6 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         if (mBrightness != -1) {
             dismissBrightnessView();
         }
-        Log.d(TAG,"getCurrentPosition="+getCurrentPosition()+"   getDuration()="+getDuration() +"  mOldCurrentPosition="+mOldCurrentPosition+"  mCurrentPosition="+mCurrentPosition);
         if (mOldCurrentPosition != mCurrentPosition && mCurrentPosition != -1) {
             seekTo(mCurrentPosition);
             start();
@@ -378,9 +384,14 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         }
 
         @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            getIjkVideoView().onSingleTapUp(e);
+            return super.onSingleTapUp(e);
+        }
+
+        @Override
         public boolean onScroll(MotionEvent oldEv, MotionEvent posEv,
                                 float distanceX, float distanceY) {
-            Log.d(TAG, " distanceX=" + distanceX + "  distanceY=" + distanceY);
             float countX = Math.abs(oldEv.getX() - posEv.getX());
             float countY = Math.abs(oldEv.getY() - posEv.getY());
             int windowWidth = getIjkVideoView().getResources().getDisplayMetrics().widthPixels;
@@ -412,23 +423,23 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
     }
 
     private void onSeekSlide(float percent) {
+        int duration = getDuration();
         if (mOldCurrentPosition == -1) {
             mPositionSlide = SLIDE_SEEK;
             mOldCurrentPosition = getCurrentPosition();
             mCurrentPosition = getCurrentPosition();
-            showSeekView(mCurrentPosition);
+            showSeekView(percent > 0, mCurrentPosition, mOldCurrentPosition, duration);
         }
         if (mPositionSlide != SLIDE_SEEK) {
             return;
         }
-        int duration = getDuration();
         mCurrentPosition = mOldCurrentPosition + (int) (duration * percent);
         if (mCurrentPosition < 0) {
             mCurrentPosition = 0;
         } else if (mCurrentPosition > duration) {
             mCurrentPosition = duration;
         }
-        showSeekView(mCurrentPosition);
+        showSeekView(percent > 0, mCurrentPosition, mOldCurrentPosition, duration);
     }
 
     /**
@@ -444,7 +455,7 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
             if (mVolume < 0) {
                 mVolume = 0;
             }
-            showVolumeView(mVolume, mMaxVolume);
+            showVolumeView((float) mVolume / (float) mMaxVolume);
         }
         if (mPositionSlide != SLIDE_VOLUME) {
             return;
@@ -455,8 +466,8 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
         } else if (mVolume < 0) {
             index = 0;
         }
-        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, index, AudioManager.FLAG_SHOW_UI);
-        changeVolumeProgress(mVolume, mMaxVolume);
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, index, 0);
+        changeVolumeProgress((float) index / (float) mMaxVolume);
     }
 
     /**
@@ -497,14 +508,14 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
     /**
      * 显示音量调节的ui
      */
-    protected void showVolumeView(int volume, int maxVolume) {
+    protected void showVolumeView(float percent) {
 
     }
 
     /**
      * 改变音量大小
      */
-    protected void changeVolumeProgress(int volume, int maxVolume) {
+    protected void changeVolumeProgress(float percent) {
 
     }
 
@@ -539,14 +550,14 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
     /**
      * 显示播放进度调节的ui
      */
-    protected void showSeekView(int currentPosition) {
+    protected void showSeekView(boolean isForward, int currentPosition, int oldCurrentPosition, int duration) {
 
     }
 
     /**
      * 改变播放进度大小
      */
-    protected void changeSeekProgress(int currentPosition) {
+    protected void changeSeekProgress(boolean isForward, int currentPosition, int oldCurrentPosition, int duration) {
 
     }
 
@@ -557,5 +568,12 @@ public class IjkVideoView extends FrameLayout implements IVideoView {
 
     }
 
+    /**
+     * 单次点击
+     *
+     * @param ev
+     */
+    protected void onSingleTapUp(MotionEvent ev) {
+    }
 
 }

@@ -9,7 +9,8 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import com.jake.library.IRenderView;
-import com.jake.library.IjkVideoView;
+import com.jake.library.videoview.CommonVideoView;
+import com.jake.library.videoview.IjkVideoView;
 
 /**
  * @author Administrator
@@ -19,13 +20,13 @@ import com.jake.library.IjkVideoView;
 
 public class TvActivity extends Activity {
     private String mUrl;
-    private IjkVideoView mSurfaceRenderView;
+    private CommonVideoView mSurfaceRenderView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tv);
-        mSurfaceRenderView = (IjkVideoView) findViewById(R.id.video_view);
+        mSurfaceRenderView = (CommonVideoView) findViewById(R.id.video_view);
         mUrl = getIntent().getStringExtra("url");
         if (TextUtils.isEmpty(mUrl)) {
             finish();

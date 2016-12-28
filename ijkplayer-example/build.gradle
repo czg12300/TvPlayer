@@ -4,7 +4,7 @@ android {
     // http://tools.android.com/tech-docs/new-build-system/tips
     //noinspection GroovyAssignabilityCheck
     compileSdkVersion 24
-    buildToolsVersion "24.0.3"
+    buildToolsVersion '25.0.0'
     defaultConfig {
         applicationId "tv.danmaku.ijk.media.example"
         minSdkVersion 9

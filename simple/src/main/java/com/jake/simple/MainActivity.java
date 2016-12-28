@@ -20,6 +20,7 @@ public class MainActivity extends AppCompatActivity {
         mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         mAdapter.add("电视1");
         mAdapter.add("电视2");
+        mAdapter.add("摄像头");
         listView.setAdapter(mAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -30,6 +31,9 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case 1:
                         TvListActivity.start(MainActivity.this, 1);
+                        break;
+                    case 2:
+                        CameraDemoActivity.start(MainActivity.this);
                         break;
                 }
             }

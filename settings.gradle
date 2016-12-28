@@ -1,1 +1,1 @@
-include ':ijkplayer-example', ':library', ':simple'
+include ':ijkplayer-example', ':library', ':simple', ':camera'

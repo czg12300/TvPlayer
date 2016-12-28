@@ -23,6 +23,9 @@
             android:name=".TvListActivity"
             android:screenOrientation="portrait" />
         <activity
+            android:name=".CameraDemoActivity"
+            android:screenOrientation="portrait" />
+        <activity
             android:name=".TvActivity"
             android:launchMode="singleTop"
             android:screenOrientation="sensorLandscape"

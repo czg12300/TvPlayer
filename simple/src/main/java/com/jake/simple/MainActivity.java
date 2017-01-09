@@ -21,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
         mAdapter.add("电视1");
         mAdapter.add("电视2");
         mAdapter.add("摄像头");
+        mAdapter.add("视频剪辑");
         listView.setAdapter(mAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -34,6 +35,9 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case 2:
                         CameraDemoActivity.start(MainActivity.this);
+                        break;
+                    case 3:
+                        VideoClipActivity.start(MainActivity.this);
                         break;
                 }
             }

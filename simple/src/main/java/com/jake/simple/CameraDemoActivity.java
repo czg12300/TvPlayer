@@ -17,6 +17,7 @@ public class CameraDemoActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_camera);
     }
 
     public static void start(Context context) {
